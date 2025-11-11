@@ -51,7 +51,7 @@ def predict_material(audio):
 # Build Gradio Interface
 interface = gr.Interface(
     fn=predict_material,
-    inputs=gr.Audio(sources=["microphone"], type="filepath", label="🎙️ Record or Upload Sound"),
+    inputs=gr.Audio(source="microphone", type="filepath", label="🎙️ Record or Upload Sound"),
     outputs=[
         gr.Textbox(label="Detected Noise"),
         gr.Textbox(label="Recommended Material")
@@ -62,4 +62,4 @@ interface = gr.Interface(
 
 # Launch for Hugging Face Spaces 
 if __name__ == "__main__":
-    interface.launch(server_name="0.0.0.0", server_port=7860)
+    interface.launch(server_name="0.0.0.0", server_port=5000)
