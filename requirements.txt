@@ -3,3 +3,5 @@ joblib
 numpy
 gradio==3.45.0
 librosa
+flask
+gunicorn
