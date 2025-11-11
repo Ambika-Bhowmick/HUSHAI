@@ -69,4 +69,4 @@ async function loop() {
     requestAnimationFrame(loop);
 }
 // Connect the start listening button in HTML to startListening()
-document.getElementById("startBtn").addEventListener("click", startListening);a
+document.getElementById("startBtn").addEventListener("click", startListening);
