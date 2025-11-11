@@ -1,21 +1,17 @@
-# Import everthing that is needed to run the code
+# Import everything that is needed
 import gradio as gr
 import joblib
 import numpy as np
 import librosa
 
-#Load models and encoders
+# Load models and encoders
 model = joblib.load("material_recommender.pkl")
 noise_encoder = joblib.load("noise_encoder.pkl")
 material_encoder = joblib.load("material_encoder.pkl")
 
-# --- Map from audio classification to label ---
-# TM machine labels
-tm_labels = ["Background noise", "Construction", "Traffic", "Barking", "Neighbours"]
-
-def detect_noise(audio):
-    # Load audio features (simulate TM classification)
-    y, sr = librosa.load(audio, sr=None)
+# Detect noise type from audio
+def detect_noise(audio_path):
+    y, sr = librosa.load(audio_path, sr=None)
     rms = np.mean(librosa.feature.rms(y=y))
     if rms < 0.005:
         return "Background noise"
@@ -28,38 +24,33 @@ def detect_noise(audio):
     else:
         return "Construction"
 
-# Function for prediction
-def predict_material(audio):
-    if audio is None:
+# Predict best soundproofing material
+def predict_material(audio_path):
+    if audio_path is None:
         return "No audio provided", "N/A"
 
-    # Step 1: detect noise type from audio
-    noise_label = detect_noise(audio)
-
-    # Step 2: if background noise, return N/A
+    noise_label = detect_noise(audio_path)
     if noise_label == "Background noise":
         return noise_label, "N/A"
 
-    # Step 3: encode + predict material
     encoded_noise = noise_encoder.transform([noise_label])
-    input_features = [[encoded_noise[0], 0]]  # Fake second feature as Google colab AI was trained with two but that isn't needed here
+    input_features = np.array([[encoded_noise[0], 0]])  # placeholder feature
     predicted_material_encoded = model.predict(input_features)
     predicted_material = material_encoder.inverse_transform(predicted_material_encoded)[0]
 
     return noise_label, predicted_material
 
-# Build Gradio Interface
-interface = gr.Interface(
-    fn=predict_material,
-    inputs=gr.Audio(source="microphone", type="filepath", label="🎙️ Record or Upload Sound"),
-    outputs=[
-        gr.Textbox(label="Detected Noise"),
-        gr.Textbox(label="Recommended Material")
-    ],
-    title="H.U.S.H AI - Helping Us Silence Homes",
-    description="Record a sound and get the best soundproofing material recommendation."
-)
+# Create Gradio interface
+with gr.Blocks(title="H.U.S.H AI - Helping Us Silence Homes") as demo:
+    gr.Markdown("## 🎧 H.U.S.H AI - Helping Us Silence Homes")
+    gr.Markdown("Record or upload a sound to get the best soundproofing material recommendation.")
+    
+    audio_input = gr.Audio(type="filepath", label="🎙️ Record or Upload Sound")
+    detect_btn = gr.Button("Analyze Sound")
+    noise_output = gr.Textbox(label="Detected Noise Type")
+    material_output = gr.Textbox(label="Recommended Material")
+    
+    detect_btn.click(predict_material, inputs=audio_input, outputs=[noise_output, material_output])
 
-# Launch for Hugging Face Spaces 
 if __name__ == "__main__":
-    interface.launch(server_name="0.0.0.0", server_port=5000)
+    demo.launch(server_name="0.0.0.0", server_port=7860)
