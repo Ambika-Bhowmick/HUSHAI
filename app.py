@@ -1,19 +1,18 @@
+# Import everthing that is needed to run the code
 import gradio as gr
 import joblib
 import numpy as np
 import librosa
 
-# --- Load models and encoders ---
+#Load models and encoders
 model = joblib.load("material_recommender.pkl")
 noise_encoder = joblib.load("noise_encoder.pkl")
 material_encoder = joblib.load("material_encoder.pkl")
 
 # --- Map from audio classification to label ---
-# These are your Teachable Machine class names
+# TM machine labels
 tm_labels = ["Background noise", "Construction", "Traffic", "Barking", "Neighbours"]
 
-# --- Fake TM function (replace with your Teachable Machine later) ---
-# For now it simulates noise detection from audio
 def detect_noise(audio):
     # Load audio features (simulate TM classification)
     y, sr = librosa.load(audio, sr=None)
@@ -29,7 +28,7 @@ def detect_noise(audio):
     else:
         return "Construction"
 
-# --- Prediction function ---
+# Function for prediction
 def predict_material(audio):
     if audio is None:
         return "No audio provided", "N/A"
@@ -43,13 +42,13 @@ def predict_material(audio):
 
     # Step 3: encode + predict material
     encoded_noise = noise_encoder.transform([noise_label])
-    input_features = [[encoded_noise[0], 0]]  # dummy 2nd feature
+    input_features = [[encoded_noise[0], 0]]  # Fake second feature as Google colab AI was trained with two but that isn't needed here
     predicted_material_encoded = model.predict(input_features)
     predicted_material = material_encoder.inverse_transform(predicted_material_encoded)[0]
 
     return noise_label, predicted_material
 
-# --- Build Gradio Interface ---
+# Build Gradio Interface
 interface = gr.Interface(
     fn=predict_material,
     inputs=gr.Audio(sources=["microphone"], type="filepath", label="🎙️ Record or Upload Sound"),
@@ -61,6 +60,6 @@ interface = gr.Interface(
     description="Record a sound and get the best soundproofing material recommendation."
 )
 
-# --- Launch for Hugging Face Spaces ---
+# Launch for Hugging Face Spaces 
 if __name__ == "__main__":
     interface.launch(server_name="0.0.0.0", server_port=7860)
